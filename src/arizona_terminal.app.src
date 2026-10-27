@@ -1,0 +1,24 @@
+{application, arizona_terminal, [
+    {description, "ANSI terminal render target for Arizona, over a local TTY or SSH"},
+    {vsn, semver},
+    {registered, []},
+    %% ssh is deliberately in NEITHER `applications` nor `optional_applications`:
+    %% it is lazy-started when the SSH transport starts (arizona_terminal_ssh:start/1).
+    %% Listing it -- or in optional_applications, which relx also bundles AND
+    %% force-starts -- would boot it for an app that only uses the local TTY. An app
+    %% that serves over SSH declares ssh in its OWN app's `applications`.
+    {applications, [
+        kernel,
+        stdlib,
+        arizona
+    ]},
+    {env, []},
+    {modules, []},
+    {licenses, ["Apache-2.0"]},
+    {links, [
+        {"GitHub", "https://github.com/arizona-framework/arizona_terminal"},
+        {"Docs", "https://hexdocs.pm/arizona_terminal"},
+        {"Issues", "https://github.com/arizona-framework/arizona_terminal/issues"},
+        {"Arizona", "https://github.com/arizona-framework/arizona"}
+    ]}
+]}.
