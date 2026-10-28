@@ -1,0 +1,4 @@
+[{<<"arizona">>,
+  {git,"https://github.com/arizona-framework/arizona.git",
+       {ref,"15bc87f631905dc96f7e049c6c8784a412989680"}},
+  0}].
