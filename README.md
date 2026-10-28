@@ -19,8 +19,9 @@ Requires OTP 29 (the backend calls `io_ansi`). Include the header beside Arizona
 -include_lib("arizona_terminal/include/arizona_terminal.hrl").
 ```
 
-The header defines `?terminal` and declares the target to Arizona's parse transform
-(`-arizona_target({terminal, arizona_terminal})`). An app that serves over SSH lists
+The header defines `?terminal` as `arizona_template:target(arizona_terminal, Elems)`:
+the macro names its backend, and Arizona's parse transform compiles it with that
+backend. An app that serves over SSH lists
 `ssh` in its own `applications`; this package starts it lazily when the SSH transport
 starts, so a TTY-only app never boots it.
 

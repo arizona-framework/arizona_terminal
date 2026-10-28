@@ -3,8 +3,8 @@
 -include_lib("stdlib/include/assert.hrl").
 
 %% How the parse transform compiles `?terminal`: the backend's markers, escaping,
-%% styles and the vocabulary it rejects at compile time. Each source declares the
-%% target the way arizona_terminal.hrl does.
+%% styles and the vocabulary it rejects at compile time. Each source names the
+%% backend the way arizona_terminal.hrl's macro does.
 
 -export([all/0]).
 -export([groups/0]).
@@ -49,10 +49,10 @@ groups() ->
 terminal_target_marked(Config) when is_list(Config) ->
     %% A ?terminal template carries `backend => arizona_terminal`.
     Mod = compile_module(
-        "-module(pt_term_marked). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_marked). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {line, [green], [arizona_template:get(msg, Bindings)]}"
         "    ). "
     ),
@@ -64,10 +64,10 @@ terminal_target_marked(Config) when is_list(Config) ->
 %% at the render boundary. Before, terminal values were emitted bare.
 terminal_value_marked_for_escape(Config) when is_list(Config) ->
     Mod = compile_module(
-        "-module(pt_term_esc). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_esc). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {col, [], [{line, [], [arizona_template:get(msg, Bindings)]}]}"
         "    ). "
     ),
@@ -83,10 +83,10 @@ terminal_value_marked_for_escape(Config) when is_list(Config) ->
 %% own ANSI (CSI `\e[`) is framework static, not a dynamic value, so it is intact.
 terminal_sanitizes_control_chars(Config) when is_list(Config) ->
     Mod = compile_module(
-        "-module(pt_term_sanitize). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_sanitize). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {col, [], [{line, [], [arizona_template:get(msg, Bindings)]}]}"
         "    ). "
     ),
@@ -103,10 +103,10 @@ terminal_sanitizes_control_chars(Config) when is_list(Config) ->
 
 terminal_renders_styled_ansi(Config) when is_list(Config) ->
     Mod = compile_module(
-        "-module(pt_term_styled). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_styled). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {col, [], ["
         "            {line, [green], [arizona_template:get(msg, Bindings)]}"
         "        ]}"
@@ -121,10 +121,10 @@ terminal_renders_styled_ansi(Config) when is_list(Config) ->
 terminal_custom_sgr_attr(Config) when is_list(Config) ->
     %% {sgr, Escape} emits a raw escape verbatim (escape hatch for custom codes).
     Mod = compile_module(
-        "-module(pt_term_sgr). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_sgr). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {text, [{sgr, <<\"\\e[1m\">>}], [arizona_template:get(msg, Bindings)]}"
         "    ). "
     ),
@@ -135,10 +135,10 @@ terminal_custom_sgr_attr(Config) when is_list(Config) ->
 terminal_fg_attr(Config) when is_list(Config) ->
     %% {fg, Index} selects a 256-colour palette entry.
     Mod = compile_module(
-        "-module(pt_term_fg). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_fg). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {text, [{fg, <<\"208\">>}], [arizona_template:get(msg, Bindings)]}"
         "    ). "
     ),
@@ -148,10 +148,10 @@ terminal_fg_attr(Config) when is_list(Config) ->
 
 terminal_unknown_style_rejected(Config) when is_list(Config) ->
     assert_parse_error(
-        "-module(pt_term_bad_style). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_bad_style). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {text, [grween], [arizona_template:get(x, Bindings)]}"
         "    ). ",
         fun
@@ -164,10 +164,10 @@ terminal_unknown_style_rejected(Config) when is_list(Config) ->
 %% rejected like the `true` form, not dropped silently.
 terminal_unknown_false_style_rejected(Config) when is_list(Config) ->
     assert_parse_error(
-        "-module(pt_term_bad_false_style). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_bad_false_style). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {text, [{bolld, false}], [arizona_template:get(x, Bindings)]}"
         "    ). ",
         fun
@@ -178,10 +178,10 @@ terminal_unknown_false_style_rejected(Config) when is_list(Config) ->
 
 terminal_unknown_attr_rejected(Config) when is_list(Config) ->
     assert_parse_error(
-        "-module(pt_term_bad_attr). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_bad_attr). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {text, [{class, <<\"box\">>}], [arizona_template:get(x, Bindings)]}"
         "    ). ",
         fun
@@ -208,9 +208,9 @@ terminal_unknown_tag_rejected(Config) when is_list(Config) ->
                 lists:flatten([
                     "-module(",
                     Mod,
-                    "). -arizona_target({terminal, arizona_terminal}). ",
+                    "). ",
                     "-export([render/1]). render(Bindings) -> ",
-                    "arizona_template:terminal({col, [], [",
+                    "arizona_template:target(arizona_terminal, {col, [], [",
                     Elem,
                     "]}). "
                 ]),
@@ -227,10 +227,10 @@ terminal_unknown_tag_rejected(Config) when is_list(Config) ->
 %% resets and breaks, `br` breaks, the rest are transparent containers.
 terminal_known_tags_accepted(Config) when is_list(Config) ->
     Mod = compile_module(
-        "-module(pt_term_tags_ok). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_tags_ok). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal({col, [], ["
+        "    arizona_template:target(arizona_terminal, {col, [], ["
         "        {row, [], [{text, [], [<<\"a\">>]}, {span, [], [<<\"b\">>]}]}, "
         "        {line, [], [<<\"c\">>]}, "
         "        {br, [], []}"
@@ -241,10 +241,10 @@ terminal_known_tags_accepted(Config) when is_list(Config) ->
 
 terminal_event_command_rejected(Config) when is_list(Config) ->
     assert_parse_error(
-        "-module(pt_term_bad_cmd). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_bad_cmd). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {text, [{az_click, arizona_js:push_event(<<\"go\">>)}], "
         "               [arizona_template:get(x, Bindings)]}"
         "    ). ",
@@ -256,10 +256,10 @@ terminal_event_command_rejected(Config) when is_list(Config) ->
 
 terminal_dynamic_attr_rejected(Config) when is_list(Config) ->
     assert_parse_error(
-        "-module(pt_term_dyn_attr). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_dyn_attr). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal("
+        "    arizona_template:target(arizona_terminal, "
         "        {text, [{fg, arizona_template:get(color, Bindings)}], "
         "               [arizona_template:get(x, Bindings)]}"
         "    ). ",
@@ -273,10 +273,10 @@ terminal_each_renders(Config) when is_list(Config) ->
     %% ?each inside ?terminal compiles each item with the terminal backend and
     %% renders one ANSI line per list element.
     Mod = compile_module(
-        "-module(pt_term_each). -arizona_target({terminal, arizona_terminal}). "
+        "-module(pt_term_each). "
         "-export([render/1]). "
         "render(Bindings) -> "
-        "    arizona_template:terminal({col, [], ["
+        "    arizona_template:target(arizona_terminal, {col, [], ["
         "        arizona_template:each("
         "            fun(Item) -> {line, [], [Item]} end,"
         "            arizona_template:get(items, Bindings))"
